@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz System Component Demo</title>
+    <link rel="stylesheet" href="quiz-system.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .demo-container {
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .demo-title {
+            margin-bottom: 2rem;
+            font-size: 2.5rem;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .demo-description {
+            color: white;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        
+        .quiz-wrapper {
+            margin-bottom: 2rem;
+        }
+        
+        .custom-questions-btn {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 1rem;
+            transition: all 0.2s ease;
+        }
+        
+        .custom-questions-btn:hover {
+            background: #f7fafc;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1 class="demo-title">Quiz System Component Demo</h1>
+        <p class="demo-description">This demonstrates the QuizSystem component with customizable options and event handling.</p>
+        
+        <div class="quiz-wrapper">
+            <div id="quizContainer"></div>
+        </div>
+        
+        <button class="custom-questions-btn" onclick="loadCustomQuestions()">Load Custom Questions</button>
+        <button class="custom-questions-btn" onclick="resetToDefault()">Reset to Default</button>
+    </div>
+
+    <script type="module">
+        import { QuizSystem } from './QuizSystem.js';
+        
+        // Initialize the quiz system component
+        const quizSystem = new QuizSystem('quizContainer', {
+            showResults: true,
+            allowRetry: true
+        });
+        
+        // Example of using the public API
+        document.addEventListener('quizCompleted', (e) => {
+            console.log('Quiz completed!', e.detail);
+        });
+        
+        // Make functions globally available for demo buttons
+        window.loadCustomQuestions = function() {
+            const customQuestions = [
+                {
+                    question: "What is 2 + 2?",
+                    options: ["3", "4", "5", "6"],
+                    correctAnswer: 1
+                },
+                {
+                    question: "What color is the sky?",
+                    options: ["Red", "Green", "Blue", "Yellow"],
+                    correctAnswer: 2
+                },
+                {
+                    question: "How many days are in a week?",
+                    options: ["5", "6", "7", "8"],
+                    correctAnswer: 2
+                }
+            ];
+            
+            quizSystem.setQuestions(customQuestions);
+        };
+        
+        window.resetToDefault = function() {
+            quizSystem.resetQuiz();
+        };
+    </script>
+</body>
+</html>

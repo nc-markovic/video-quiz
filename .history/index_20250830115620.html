@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Player - Mini Project 1</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="video-container">
+        <video id="videoPlayer" preload="metadata">
+            <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        
+        <div class="video-controls">
+            <div class="controls-top">
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-filled"></div>
+                    </div>
+                    <div class="time-display">
+                        <span class="current-time">0:00</span>
+                        <span>/</span>
+                        <span class="total-time">0:00</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="controls-bottom">
+                <button class="play-pause-btn">
+                    <span class="play-icon">▶</span>
+                    <span class="pause-icon">⏸</span>
+                </button>
+                
+                <div class="volume-controls">
+                    <button class="mute-btn">🔊</button>
+                    <div class="volume-slider">
+                        <input type="range" class="volume-range" min="0" max="100" value="100">
+                    </div>
+                </div>
+                
+                <button class="fullscreen-btn">⛶</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

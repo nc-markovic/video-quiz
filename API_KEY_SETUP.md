@@ -102,8 +102,8 @@ When you first use the Image Quiz feature, the app will prompt you to enter your
 - Try creating a fresh API key if issues persist
 
 **Want to test without API key?**
-- Use the Video Quiz feature instead - it doesn't require an API key
-- The video quiz has pre-made questions and works immediately
+- The app includes free AI providers that work without any setup
+- Try the Hugging Face integration for basic image analysis
 
 ## 📞 Need Help?
 

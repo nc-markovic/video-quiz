@@ -1,8 +1,34 @@
 {
+  "name": "image-quiz-app",
+  "version": "1.0.0",
+  "description": "AI-Powered Image Quiz Generation App using Google's Gemini AI and Firebase",
+  "main": "index.html",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "serve": "npx serve .",
+    "test": "playwright test"
+  },
+  "keywords": [
+    "image-quiz",
+    "ai",
+    "gemini",
+    "firebase",
+    "javascript",
+    "web-components"
+  ],
+  "author": "",
+  "license": "MIT",
   "dependencies": {
     "firebase": "^12.2.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nc-markovic/video-quiz.git"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   }
 }

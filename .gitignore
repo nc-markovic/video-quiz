@@ -11,6 +11,9 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
+# API Keys and sensitive configuration (if any)
+**/firebase-config.js
+
 # Build outputs
 dist/
 build/

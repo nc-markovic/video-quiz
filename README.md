@@ -2,7 +2,13 @@
 
 A full-stack video quiz application built with modern web technologies and Google Firebase.
 
-## 🚀 Features
+## � Quick Start - API Setup
+
+**For AI-powered Image Quiz features**: See [API_KEY_SETUP.md](./API_KEY_SETUP.md) for instructions on getting your free Gemini API key.
+
+**To try immediately**: Use the Video Quiz feature which works without any API keys!
+
+## �🚀 Features
 
 ### ✅ Phase 1: Firebase Setup & Authentication (COMPLETED)
 - **Email/Password Authentication** - User registration and login

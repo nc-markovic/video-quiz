@@ -265,7 +265,12 @@ export class QuizSystem {
         if (this.options.showResults) {
             this.showResults();
         }
-        this.dispatchEvent('quizCompleted', { score: this.score, total: this.questions.length });
+        this.dispatchEvent('quizCompleted', { 
+            score: this.score, 
+            total: this.questions.length,
+            userAnswers: [...this.userAnswers], // Include actual user answers
+            questions: this.questions // Include questions for detailed analysis
+        });
     }
     
     showResults() {

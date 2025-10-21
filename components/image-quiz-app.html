@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Quiz App - AI-Powered Image Quizzes</title>
+    <link rel="stylesheet" href="image-player/image-player.css">
+    <link rel="stylesheet" href="quiz-system/quiz-system.css">
+    <link rel="stylesheet" href="firebase/auth-ui.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d3748 100%);
+            margin: 0;
+            padding: 2rem;
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .app-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .app-title {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #ff6b6b, #667eea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .app-subtitle {
+            font-size: 1.2rem;
+            color: #a0aec0;
+            margin-bottom: 2rem;
+        }
+        
+        .app-instructions {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: 12px;
+            max-width: 800px;
+            margin: 0 auto 2rem auto;
+            text-align: center;
+        }
+        
+        .app-instructions h3 {
+            color: #ff6b6b;
+            margin-bottom: 1rem;
+        }
+        
+        .app-instructions p {
+            color: #a0aec0;
+            line-height: 1.6;
+        }
+        
+        .image-quiz-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .image-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #ff6b6b;
+            text-align: center;
+        }
+        
+        .quiz-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .image-controls {
+            margin-top: 1rem;
+            text-align: center;
+        }
+        
+        .control-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 0.5rem;
+            transition: all 0.2s ease;
+        }
+        
+        .control-btn:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+        
+        .control-btn:disabled {
+            background: #4a5568;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .control-btn.secondary {
+            background: #718096;
+        }
+        
+        .control-btn.secondary:hover {
+            background: #4a5568;
+        }
+        
+        .status-indicator {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .status-indicator.loading {
+            border-left: 4px solid #ed8936;
+        }
+        
+        .status-indicator.success {
+            border-left: 4px solid #48bb78;
+        }
+        
+        .status-indicator.error {
+            border-left: 4px solid #ff6b6b;
+        }
+        
+        .url-input-section {
+            margin-bottom: 1rem;
+        }
+        
+        .url-input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .url-input::placeholder {
+            color: #a0aec0;
+        }
+        
+        .url-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+        }
+        
+        .auth-section {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .auth-section h3 {
+            color: #ffc107;
+            margin-top: 0;
+        }
+        
+        .auth-section p {
+            color: #ffc107;
+            margin-bottom: 1rem;
+        }
+        
+        .auth-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+        
+        .auth-buttons .control-btn {
+            width: 100%;
+            text-align: center;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, rgba(26, 26, 26, 0.95) 0%, rgba(45, 55, 72, 0.95) 100%);
+            margin: 5% auto;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            color: white;
+            position: relative;
+            backdrop-filter: blur(10px);
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            right: 1rem;
+            top: 1rem;
+            cursor: pointer;
+        }
+        
+        .close:hover,
+        .close:focus {
+            color: #ff6b6b;
+            text-decoration: none;
+        }
+        
+        .modal h3 {
+            color: #ff6b6b;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .modal p {
+            color: #a0aec0;
+            margin-bottom: 2rem;
+            text-align: center;
+            line-height: 1.6;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #e2e8f0;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        
+        .form-group input::placeholder {
+            color: #a0aec0;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+        }
+        
+        .user-info {
+            background: rgba(72, 187, 120, 0.1);
+            border: 1px solid rgba(72, 187, 120, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .user-info h3 {
+            color: #48bb78;
+            margin-top: 0;
+        }
+        
+        .user-info p {
+            color: #48bb78;
+            margin-bottom: 0.5rem;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 1024px) {
+            .image-quiz-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .app-title {
+                font-size: 2rem;
+            }
+            
+            .control-btn {
+                width: 100%;
+                margin: 0.25rem 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-header">
+        <h1 class="app-title">🖼️ Image Quiz App</h1>
+        <p class="app-subtitle">AI-Powered Quiz Generation from Images</p>
+        
+                    <div class="app-instructions">
+                <h3>🚀 How It Works - Now with Free AI!</h3>
+                <p>
+                    1. <strong>Choose AI Provider:</strong> Select from free options (Hugging Face) or premium services<br>
+                    2. <strong>Load an Image:</strong> Enter a URL or use our sample images<br>
+                    3. <strong>Auto-Generate Quiz:</strong> AI automatically analyzes the image and creates questions<br>
+                    4. <strong>Take the Quiz:</strong> Answer the questions and get your score!<br>
+                    <em>✨ No API keys required for free options!</em>
+                </p>
+            </div>
+    </div>
+
+    <!-- Authentication Section -->
+    <div class="auth-section" id="authSection">
+        <h3>🔐 Sign In (Optional)</h3>
+        <p>Sign in to save your quiz progress and compete with other users! Or continue without signing in.</p>
+        <div id="authContainer">
+            <!-- Fallback auth buttons if AuthUI doesn't load -->
+            <div class="auth-buttons" id="fallbackAuth">
+                <button class="control-btn" id="signInBtn">🔑 Sign In with Email</button>
+                <button class="control-btn secondary" id="googleSignInBtn">🔗 Sign In with Google</button>
+                <button class="control-btn secondary" id="registerBtn">📝 Create Account</button>
+                <button class="control-btn secondary" id="continueAnonymousBtn">👤 Continue as Guest</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Registration Modal -->
+    <div class="modal hidden" id="registrationModal">
+        <div class="modal-content">
+            <span class="close" id="closeRegisterModal">&times;</span>
+            <h3>📝 Create Your Account</h3>
+            <p>Join our quiz community to save your progress and compete with others!</p>
+            
+            <form id="registrationForm">
+                <div class="form-group">
+                    <label for="regEmail">Email Address</label>
+                    <input type="email" id="regEmail" required placeholder="Enter your email">
+                </div>
+                
+                <div class="form-group">
+                    <label for="regPassword">Password</label>
+                    <input type="password" id="regPassword" required placeholder="Min 6 characters" minlength="6">
+                </div>
+                
+                <div class="form-group">
+                    <label for="regDisplayName">Display Name</label>
+                    <input type="text" id="regDisplayName" required placeholder="How should we call you?">
+                </div>
+                
+                <button type="submit" class="control-btn" id="submitRegister">🚀 Create Account</button>
+            </form>
+            
+            <div class="status-indicator hidden" id="registerStatus">
+                <span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sign In Modal -->
+    <div class="modal hidden" id="signInModal">
+        <div class="modal-content">
+            <span class="close" id="closeSignInModal">&times;</span>
+            <h3>🔑 Sign In to Your Account</h3>
+            <p>Welcome back! Sign in to access your quiz history and saved progress.</p>
+            
+            <form id="signInForm">
+                <div class="form-group">
+                    <label for="signInEmail">Email Address</label>
+                    <input type="email" id="signInEmail" required placeholder="Enter your email">
+                </div>
+                
+                <div class="form-group">
+                    <label for="signInPassword">Password</label>
+                    <input type="password" id="signInPassword" required placeholder="Enter your password">
+                </div>
+                
+                <button type="submit" class="control-btn" id="submitSignIn">🔑 Sign In</button>
+            </form>
+            
+            <div class="status-indicator hidden" id="signInStatus">
+                <span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Info Section (hidden initially) -->
+    <div class="user-info hidden" id="userInfoSection">
+        <h3>👤 Welcome back!</h3>
+        <p id="userInfoText"></p>
+        <button class="control-btn secondary" id="signOutBtn">Sign Out</button>
+    </div>
+
+    <div class="image-quiz-container">
+        <div class="image-section">
+            <h2 class="section-title">🖼️ Image Display</h2>
+            
+            <div class="url-input-section">
+                <input type="url" 
+                       class="url-input" 
+                       id="imageUrlInput" 
+                       placeholder="Enter image URL (e.g., https://picsum.photos/800/600)"
+                       value="https://picsum.photos/800/600">
+                <button class="control-btn secondary" id="loadSampleBtn">Load Sample Image</button>
+            </div>
+            
+            <div id="imageContainer"></div>
+            
+            <div class="image-controls">
+                <button class="control-btn secondary" id="resetImageBtn">🔄 Reset Image</button>
+            </div>
+            
+            <div class="ai-provider-selection" style="margin-top: 1rem; text-align: center;">
+                <label for="aiProvider" style="color: #a0aec0; font-size: 0.9rem;">AI Provider:</label>
+                <select id="aiProvider" style="margin-left: 0.5rem; padding: 0.3rem; border-radius: 4px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);">
+                    <option value="huggingface">🆓 Hugging Face (Free)</option>
+                    <option value="cohere">🆓 Cohere (Free Tier)</option>
+                    <option value="ollama">🏠 Ollama (Local)</option>
+                    <option value="gemini">🤖 Google Gemini</option>
+                    <option value="openai">🔥 OpenAI</option>
+                </select>
+                <span id="providerStatus" style="margin-left: 0.5rem; font-size: 0.8rem; color: #10b981;">✅ Ready</span>
+            </div>
+            
+            <div class="status-indicator hidden" id="imageStatusIndicator">
+                <span>Ready to load image</span>
+            </div>
+        </div>
+
+        <div class="quiz-section">
+            <h2 class="section-title">❓ AI-Generated Quiz</h2>
+            <div id="quizContainer"></div>
+            
+            <div class="status-indicator hidden" id="quizStatusIndicator">
+                <span>Enter an image URL above and quiz questions will be generated automatically</span>
+            </div>
+            
+            <!-- Debug/Test Section (only visible when signed in) -->
+            <div class="debug-section hidden" id="debugSection" style="margin-top: 2rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                <h3 style="color: #a0aec0; font-size: 1rem; margin-bottom: 1rem;">🧪 Database Testing</h3>
+                <button class="control-btn secondary" id="addDummyDataBtn" onclick="addDummyTestData()">
+                    📊 Add Dummy Quiz Data to Firebase
+                </button>
+                <button class="control-btn secondary" onclick="testQuizSaving()" style="margin-left: 0.5rem;">
+                    🧪 Test Quiz Saving
+                </button>
+                <button class="control-btn secondary" onclick="checkAuthStatus()" style="margin-left: 0.5rem;">
+                    🔐 Check Auth Status
+                </button>
+                <button class="control-btn secondary" onclick="testAIProviders()" style="margin-left: 0.5rem;">
+                    🤖 Test AI Providers
+                </button>
+                <p style="color: #a0aec0; font-size: 0.8rem; margin-top: 0.5rem;">
+                    These buttons test the database functionality and AI services.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { ImagePlayer } from './image-player/ImagePlayer.js';
+        import { QuizSystem } from './quiz-system/QuizSystem.js';
+        import { MultiAIService } from './ai-service/multi-ai-service-fixed.js';
+        import { GeminiService } from './ai-service/gemini-service.js';
+        import { AuthService } from './firebase/auth-service.js';
+        import { QuizService } from './firebase/quiz-service.js';
+        import { AuthUI } from './firebase/auth-ui.js';
+        
+        // Initialize services
+        const imagePlayer = new ImagePlayer('imageContainer', {
+            showControls: true,
+            allowZoom: false  // Disable mouse wheel zoom
+        });
+        
+        const quizSystem = new QuizSystem('quizContainer', {
+            questions: [],
+            showResults: true,
+            allowRetry: true
+        });
+        
+        const geminiService = new GeminiService();
+        
+        // Initialize multi-provider AI service with error handling
+        let aiService;
+        try {
+            const multiAIService = new MultiAIService(); // Create multi-provider service instance
+            aiService = multiAIService;
+            console.log('✅ MultiAIService initialized successfully');
+        } catch (error) {
+            console.error('❌ Failed to initialize MultiAIService:', error);
+            // Fallback to gemini service
+            aiService = geminiService;
+            console.log('🔄 Using GeminiService as fallback');
+        }
+        
+        const authService = new AuthService();
+        const quizService = new QuizService();
+        
+        // Initialize auth UI
+        const authUI = new AuthUI('authContainer');
+        
+        // Add fallback auth button handlers
+        setupFallbackAuth();
+        
+        // Check if AuthUI loaded properly, if not show fallback
+        setTimeout(() => {
+            const authContainer = document.getElementById('authContainer');
+            const fallbackAuth = document.getElementById('fallbackAuth');
+            
+            // If AuthUI didn't populate the container, show fallback buttons
+            if (authContainer.children.length <= 1) {
+                console.log('AuthUI not loaded, showing fallback auth buttons');
+                if (fallbackAuth) {
+                    fallbackAuth.style.display = 'flex';
+                }
+            } else {
+                // AuthUI loaded successfully, hide fallback
+                if (fallbackAuth) {
+                    fallbackAuth.style.display = 'none';
+                }
+            }
+        }, 1000);
+        
+        // Get DOM elements
+        const authSection = document.getElementById('authSection');
+        const userInfoSection = document.getElementById('userInfoSection');
+        const userInfoText = document.getElementById('userInfoText');
+        const signOutBtn = document.getElementById('signOutBtn');
+        const imageUrlInput = document.getElementById('imageUrlInput');
+        const loadSampleBtn = document.getElementById('loadSampleBtn');
+        const resetImageBtn = document.getElementById('resetImageBtn');
+        const aiProviderSelect = document.getElementById('aiProvider');
+        const providerStatus = document.getElementById('providerStatus');
+        const imageStatusIndicator = document.getElementById('imageStatusIndicator');
+        const quizStatusIndicator = document.getElementById('quizStatusIndicator');
+        
+        // Current state
+        let currentUser = null;
+        // Global quiz state
+        let currentQuizData = null;
+        let quizStartTime = null;
+        
+        // Sample images
+        const sampleImages = [
+            'https://picsum.photos/800/600?random=1',
+            'https://picsum.photos/800/600?random=2',
+            'https://picsum.photos/800/600?random=3',
+            'https://picsum.photos/800/600?random=4',
+            'https://picsum.photos/800/600?random=5'
+        ];
+        
+        // Event listeners
+        loadSampleBtn.addEventListener('click', loadSampleImage);
+        resetImageBtn.addEventListener('click', resetImage);
+        aiProviderSelect.addEventListener('change', handleProviderChange);
+        
+        // Auto-generate quiz when image URL changes
+        imageUrlInput.addEventListener('input', handleImageUrlChange);
+        
+        // Initialize provider status
+        updateProviderStatus();
+        signOutBtn.addEventListener('click', signOut);
+        
+        // Image player event listeners
+        imagePlayer.addEventListener('imageLoaded', (e) => {
+            updateImageStatus('success', '✅ Image loaded successfully!');
+        });
+        
+        imagePlayer.addEventListener('imageError', (e) => {
+            updateImageStatus('error', '❌ Failed to load image. Please check the URL.');
+        });
+        
+        // Quiz system event listeners
+        document.addEventListener('quizCompleted', (e) => {
+            const { score, total } = e.detail;
+            const percentage = Math.round((score / total) * 100);
+            const timeSpent = quizStartTime ? Math.floor((Date.now() - quizStartTime) / 1000) : 0;
+            
+            updateQuizStatus('success', `🎉 Quiz completed! Score: ${score}/${total} (${percentage}%)`);
+            
+            // Save quiz attempt if user is signed in
+            if (currentUser && currentQuizData) {
+                saveQuizAttempt(score, total, percentage, timeSpent);
+            }
+        });
+        
+        // Auth state change listener
+        authService.onAuthStateChange((user) => {
+            currentUser = user;
+            if (user) {
+                showUserInfo(user);
+            } else {
+                showAuthSection();
+            }
+        });
+        
+        // Functions
+        function loadSampleImage() {
+            const randomImage = sampleImages[Math.floor(Math.random() * sampleImages.length)];
+            imageUrlInput.value = randomImage;
+            loadImage(randomImage);
+        }
+        
+        function handleImageUrlChange() {
+            const url = imageUrlInput.value.trim();
+            if (url && isValidImageUrl(url)) {
+                // Auto-load image when URL is entered
+                setTimeout(() => loadImage(url), 500); // Small delay for better UX
+            } else if (!url) {
+                // Clear quiz when URL is empty
+                clearQuiz();
+            }
+        }
+        
+        function isValidImageUrl(url) {
+            try {
+                new URL(url);
+                return url.match(/\.(jpeg|jpg|gif|png|svg|webp)$/i) || url.includes('picsum.photos') || url.includes('unsplash.com');
+            } catch {
+                return false;
+            }
+        }
+        
+        function clearQuiz() {
+            const quizContainer = document.getElementById('quizContainer');
+            quizContainer.innerHTML = '';
+            updateQuizStatus('', '');
+        }
+        
+        function loadImage(url) {
+            console.log('🖼️ Loading image:', url);
+            updateImageStatus('loading', '⏳ Loading image...');
+            
+            try {
+                imagePlayer.setImageSrc(url);
+                
+                // Add image load event handling
+                const img = new Image();
+                img.onload = function() {
+                    console.log('✅ Image loaded successfully');
+                    updateImageStatus('success', '✅ Image loaded successfully');
+                    
+                    // Auto-generate quiz after image loads
+                    setTimeout(() => {
+                        generateQuiz();
+                    }, 1000);
+                };
+                
+                img.onerror = function() {
+                    console.error('❌ Failed to load image:', url);
+                    updateImageStatus('error', '❌ Failed to load image. Please check the URL.');
+                };
+                
+                img.src = url;
+                
+            } catch (error) {
+                console.error('❌ Error loading image:', error);
+                updateImageStatus('error', '❌ Error loading image: ' + error.message);
+            }
+        }
+        
+        async function generateQuiz() {
+            const imageUrl = imageUrlInput.value.trim();
+            if (!imageUrl) {
+                updateQuizStatus('error', 'Please enter an image URL first');
+                return;
+            }
+            
+            try {
+                updateQuizStatus('loading', '🤖 Generating quiz questions with AI...');
+                
+                // Use multi-provider AI service (starts with free Hugging Face)
+                console.log('🤖 Starting AI quiz generation...');
+                console.log('Selected AI provider:', aiService.currentProvider);
+                console.log('AI Service available:', !!aiService);
+                
+                const questions = await aiService.generateQuizFromImage(imageUrl, {
+                    numQuestions: 5,
+                    difficulty: 'medium',
+                    questionTypes: ['multiple_choice'],
+                    subject: 'general'
+                });
+                
+                console.log('📝 Generated questions:', questions);
+                
+                // Check if these are fallback questions
+                const isFallback = questions.some(q => q.explanation && q.explanation.includes('fallback question'));
+                if (isFallback) {
+                    console.warn('⚠️ Using fallback questions - AI services unavailable');
+                    updateQuizStatus('warning', '⚠️ AI services temporarily unavailable. Using general questions.');
+                } else {
+                    console.log('✅ Successfully generated AI-powered questions');
+                    updateQuizStatus('success', '✅ AI-generated quiz ready!');
+                }
+                
+                // Store quiz data for saving later
+                currentQuizData = {
+                    imageUrl: imageUrl,
+                    questions: questions,
+                    userAnswers: new Array(questions.length).fill(null),
+                    score: 0,
+                    totalQuestions: questions.length,
+                    percentage: 0,
+                    timeSpent: 0
+                };
+                
+                // Start timing the quiz
+                quizStartTime = Date.now();
+                
+                // Set up interactive quiz system
+                displayInteractiveQuiz(questions);
+                
+            } catch (error) {
+                console.error('❌ Error generating quiz:', error);
+                updateQuizStatus('error', '❌ Error generating quiz: ' + error.message);
+                
+                // Try to use fallback questions as last resort
+                try {
+                    console.log('🔄 Attempting to use fallback questions...');
+                    const fallbackQuestions = aiService.createFallbackQuestions();
+                    displayInteractiveQuiz(fallbackQuestions);
+                    updateQuizStatus('warning', '⚠️ Using backup questions due to technical issues.');
+                } catch (fallbackError) {
+                    console.error('❌ Even fallback questions failed:', fallbackError);
+                    updateQuizStatus('error', '❌ Unable to generate quiz questions. Please try again.');
+                }
+            }
+        }
+        
+        function displayInteractiveQuiz(questions) {
+            // Use the existing QuizSystem component instead of custom HTML
+            quizSystem.setQuestions(questions);
+        }
+        
+        // Quiz completion event (restored original functionality)
+        document.addEventListener('quizCompleted', (e) => {
+            console.log('🎯 Quiz completed event fired:', e.detail);
+            const { score, total, userAnswers, questions } = e.detail;
+            const percentage = Math.round((score / total) * 100);
+            
+            console.log('📊 Quiz completion data:', {
+                score,
+                total,
+                percentage,
+                userAnswers,
+                questionsCount: questions?.length,
+                currentUser: currentUser ? currentUser.uid : 'Not logged in',
+                currentQuizData: currentQuizData ? 'Present' : 'Missing'
+            });
+            
+            let message = `🎉 Quiz completed! Your score: ${score}/${total} (${percentage}%)`;
+            
+            if (percentage === 100) {
+                message += '\n🏆 Perfect! You were very observant!';
+            } else if (percentage >= 80) {
+                message += '\n🌟 Great job! You paid good attention!';
+            } else if (percentage >= 60) {
+                message += '\n👍 Good effort! Maybe watch the image again?';
+            } else {
+                message += '\n� You might want to look at the image more carefully next time!';
+            }
+            
+            updateQuizStatus('completed', message);
+            
+            // Add save status message for logged-in users
+            if (currentUser) {
+                setTimeout(() => {
+                    const answerDetails = userAnswers ? ` (${userAnswers.filter(a => a !== null).length} answers recorded)` : '';
+                    updateQuizStatus('completed', message + `\n💾 Saving your result to your account...${answerDetails}`);
+                }, 1000);
+            } else {
+                setTimeout(() => {
+                    updateQuizStatus('completed', message + '\n⚠️ Sign in to save your progress and track your improvement!');
+                }, 1000);
+            }
+            
+            // Update quiz data for saving
+            if (currentQuizData) {
+                currentQuizData.score = score;
+                currentQuizData.percentage = percentage;
+                currentQuizData.userAnswers = userAnswers || new Array(total).fill(null);
+                currentQuizData.questions = questions || currentQuizData.questions;
+                
+                // Calculate time spent
+                if (quizStartTime) {
+                    currentQuizData.timeSpent = Math.round((Date.now() - quizStartTime) / 1000); // in seconds
+                }
+                
+                // Save quiz result if user is logged in
+                console.log('🎯 About to call saveQuizResult()');
+                saveQuizResult();
+            }
+        });
+        
+        function resetImage() {
+            imageUrlInput.value = '';
+            imagePlayer.reset();
+            clearQuiz();
+            updateImageStatus('', '');
+            updateQuizStatus('', '');
+        }
+        
+        async function handleProviderChange() {
+            const selectedProvider = aiProviderSelect.value;
+            aiService.setProvider(selectedProvider);
+            await updateProviderStatus();
+        }
+        
+        async function updateProviderStatus() {
+            const selectedProvider = aiProviderSelect.value;
+            const providers = aiService.getAvailableProviders();
+            const provider = providers.find(p => p.name === selectedProvider);
+            
+            if (!provider) {
+                providerStatus.textContent = '❌ Unknown';
+                providerStatus.style.color = '#ef4444';
+                return;
+            }
+            
+            if (provider.isFree) {
+                if (provider.isLocal) {
+                    // Check if local service (like Ollama) is running
+                    const available = await aiService.providers[selectedProvider].isAvailable();
+                    if (available) {
+                        providerStatus.textContent = '✅ Local & Free';
+                        providerStatus.style.color = '#10b981';
+                    } else {
+                        providerStatus.textContent = '⚠️ Not running';
+                        providerStatus.style.color = '#f59e0b';
+                    }
+                } else {
+                    providerStatus.textContent = '✅ Free & Ready';
+                    providerStatus.style.color = '#10b981';
+                }
+            } else if (provider.requiresApiKey && !provider.available) {
+                providerStatus.textContent = '🔑 API Key Required';
+                providerStatus.style.color = '#f59e0b';
+            } else if (provider.available) {
+                providerStatus.textContent = '✅ Ready';
+                providerStatus.style.color = '#10b981';
+            } else {
+                providerStatus.textContent = '❌ Not Available';
+                providerStatus.style.color = '#ef4444';
+            }
+        }
+        
+        async function saveQuizAttempt(score, total, percentage, timeSpent) {
+            if (!currentUser || !currentQuizData) return;
+            
+            try {
+                const quizData = {
+                    ...currentQuizData,
+                    score: score,
+                    totalQuestions: total,
+                    percentage: percentage,
+                    timeSpent: timeSpent
+                };
+                
+                const result = await quizService.saveQuizAttempt(currentUser.uid, quizData);
+                
+                if (result.success) {
+                    console.log('Quiz attempt saved successfully');
+                } else {
+                    console.error('Failed to save quiz attempt:', result.message);
+                }
+            } catch (error) {
+                console.error('Error saving quiz attempt:', error);
+            }
+        }
+        
+        async function saveQuizResult() {
+            console.log('🔄 saveQuizResult() called');
+            console.log('Current user:', currentUser ? currentUser.uid : 'None');
+            console.log('Current quiz data:', currentQuizData ? 'Present' : 'Missing');
+            
+            if (!currentUser || !currentQuizData) {
+                console.log('❌ Cannot save quiz result: User not logged in or no quiz data');
+                console.log('currentUser exists:', !!currentUser);
+                console.log('currentQuizData exists:', !!currentQuizData);
+                return;
+            }
+            
+            try {
+                updateQuizStatus('saving', '💾 Saving your quiz result...');
+                
+                // Log what we're saving for debugging
+                console.log('💾 Saving quiz data:', {
+                    userId: currentUser.uid,
+                    score: currentQuizData.score,
+                    total: currentQuizData.totalQuestions,
+                    percentage: currentQuizData.percentage,
+                    timeSpent: currentQuizData.timeSpent,
+                    answersCount: currentQuizData.userAnswers?.length || 0,
+                    questionsCount: currentQuizData.questions?.length || 0,
+                    imageUrl: currentQuizData.imageUrl
+                });
+                
+                const result = await quizService.saveQuizAttempt(currentUser.uid, currentQuizData);
+                console.log('📤 Firebase save result:', result);
+                
+                if (result.success) {
+                    console.log('Quiz result saved successfully!');
+                    const detailedMessage = `✅ Quiz result saved to your account!\n` +
+                                          `📊 Score: ${currentQuizData.score}/${currentQuizData.totalQuestions} (${currentQuizData.percentage}%)\n` +
+                                          `⏱️ Time: ${currentQuizData.timeSpent}s\n` +
+                                          `📝 ${currentQuizData.userAnswers?.length || 0} answers saved`;
+                    updateQuizStatus('saved', detailedMessage);
+                    
+                    // Clear the quiz start time
+                    quizStartTime = null;
+                } else {
+                    console.error('Failed to save quiz result:', result.message);
+                    updateQuizStatus('error', '❌ Failed to save quiz result: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error saving quiz result:', error);
+                updateQuizStatus('error', '❌ Error saving quiz result: ' + error.message);
+            }
+        }
+        
+        async function signOut() {
+            try {
+                await authService.signOut();
+                showAuthSection();
+            } catch (error) {
+                console.error('Sign out error:', error);
+            }
+        }
+        
+        // Test function to add dummy data to Firebase
+        async function addDummyTestData() {
+            if (!currentUser) {
+                alert('Please sign in first to test database functionality');
+                return;
+            }
+            
+            try {
+                console.log('Adding dummy test data...');
+                
+                // Create dummy quiz data
+                const dummyQuizData = {
+                    imageUrl: 'https://picsum.photos/800/600?random=99',
+                    questions: [
+                        {
+                            question: "What color dominates this image?",
+                            options: ["Red", "Blue", "Green", "Yellow"],
+                            correctAnswer: 1
+                        },
+                        {
+                            question: "What is the main subject of this image?",
+                            options: ["Landscape", "Portrait", "Abstract", "Architecture"],
+                            correctAnswer: 0
+                        },
+                {
+                            question: "What time of day does this appear to be?",
+                            options: ["Morning", "Afternoon", "Evening", "Night"],
+                            correctAnswer: 2
+                        }
+                    ],
+                    userAnswers: [1, 0, 2], // User got all correct
+                    score: 3,
+                    totalQuestions: 3,
+                    percentage: 100,
+                    timeSpent: 45
+                };
+                
+                // Save first dummy quiz
+                const result1 = await quizService.saveQuizAttempt(currentUser.uid, dummyQuizData);
+                console.log('First dummy quiz saved:', result1);
+                
+                // Create second dummy quiz with different results
+                const dummyQuizData2 = {
+                    ...dummyQuizData,
+                    imageUrl: 'https://picsum.photos/800/600?random=88',
+                    userAnswers: [0, 0, 1], // User got 1 out of 3
+                    score: 1,
+                    percentage: 33,
+                    timeSpent: 67
+                };
+                
+                // Save second dummy quiz
+                const result2 = await quizService.saveQuizAttempt(currentUser.uid, dummyQuizData2);
+                console.log('Second dummy quiz saved:', result2);
+                
+                // Create third dummy quiz
+                const dummyQuizData3 = {
+                    ...dummyQuizData,
+                    imageUrl: 'https://picsum.photos/800/600?random=77',
+                    userAnswers: [1, 1, 2], // User got 2 out of 3
+                    score: 2,
+                    percentage: 67,
+                    timeSpent: 30
+                };
+                
+                // Save third dummy quiz
+                const result3 = await quizService.saveQuizAttempt(currentUser.uid, dummyQuizData3);
+                console.log('Third dummy quiz saved:', result3);
+                
+                if (result1.success && result2.success && result3.success) {
+                    alert('✅ Successfully added 3 dummy quiz records to Firebase!\n\nCheck Firebase Console:\nhttps://console.firebase.google.com/project/video-quizz/firestore');
+                    
+                    // Test reading the data back
+                    const userAttempts = await quizService.getUserQuizAttempts(currentUser.uid);
+                    console.log('Retrieved user quiz attempts:', userAttempts);
+                    
+                    const userProgress = await quizService.getUserProgress(currentUser.uid);
+                    console.log('Retrieved user progress:', userProgress);
+                    
+                } else {
+                    alert('❌ Some dummy data failed to save. Check console for details.');
+                }
+                
+            } catch (error) {
+                console.error('Error adding dummy data:', error);
+                alert('❌ Error adding dummy data: ' + error.message);
+            }
+        }
+        
+        // Test function to check quiz saving functionality
+        async function testQuizSaving() {
+            if (!currentUser) {
+                alert('Please sign in first to test quiz saving functionality');
+                return;
+            }
+            
+            console.log('🧪 Testing quiz saving functionality...');
+            
+            // Create test quiz data
+            currentQuizData = {
+                imageUrl: 'https://picsum.photos/800/600?random=test',
+                questions: [
+                    {
+                        question: "Test Question 1?",
+                        options: ["A", "B", "C", "D"],
+                        correctAnswer: 1
+                    },
+                    {
+                        question: "Test Question 2?",
+                        options: ["A", "B", "C", "D"],
+                        correctAnswer: 2
+                    }
+                ],
+                userAnswers: [1, 2], 
+                score: 2,
+                totalQuestions: 2,
+                percentage: 100,
+                timeSpent: 30
+            };
+            
+            console.log('🎯 Test data created, calling saveQuizResult()...');
+            await saveQuizResult();
+            
+            alert('🧪 Test quiz saving completed! Check console and Firebase for results.');
+        }
+        
+        // Function to check authentication status and permissions
+        function checkAuthStatus() {
+            console.log('🔐 Checking authentication status...');
+            
+            if (currentUser) {
+                console.log('✅ User is authenticated:', {
+                    uid: currentUser.uid,
+                    email: currentUser.email,
+                    displayName: currentUser.displayName,
+                    emailVerified: currentUser.emailVerified
+                });
+                
+                // Test basic Firestore access
+                testFirestoreAccess();
+                
+                alert(`✅ User authenticated!\nUID: ${currentUser.uid}\nEmail: ${currentUser.email}\nCheck console for detailed info.`);
+            } else {
+                console.log('❌ User is not authenticated');
+                alert('❌ User is not authenticated. Please sign in first.');
+            }
+        }
+        
+        // Test basic Firestore access
+        async function testFirestoreAccess() {
+            try {
+                console.log('🔍 Testing Firestore access...');
+                
+                // Try to read user's existing quiz attempts
+                const result = await quizService.getUserQuizAttempts(currentUser.uid, 1);
+                console.log('📖 Firestore read test result:', result);
+                
+                if (result.success) {
+                    console.log('✅ Firestore read access: OK');
+                } else {
+                    console.log('❌ Firestore read access: FAILED', result.error);
+                }
+                
+            } catch (error) {
+                console.error('❌ Firestore access test failed:', error);
+            }
+        }
+        
+        // Test AI providers functionality
+        async function testAIProviders() {
+            console.log('🤖 Testing AI providers...');
+            
+            if (!aiService) {
+                alert('❌ AI service not initialized properly');
+                return;
+            }
+            
+            console.log('AI Service type:', aiService.constructor.name);
+            
+            try {
+                const providers = aiService.getAvailableProviders ? aiService.getAvailableProviders() : [{ name: 'gemini', available: true }];
+                console.log('Available providers:', providers);
+                
+                const currentProvider = aiService.currentProvider || 'gemini';
+                console.log('Current provider:', currentProvider);
+                
+                // Test with a simple image
+                const testImageUrl = 'https://picsum.photos/400/300?random=test';
+                console.log('Testing with image:', testImageUrl);
+                
+                console.log('🔄 Testing AI generation...');
+                const questions = await aiService.generateQuizFromImage(testImageUrl, {
+                    numQuestions: 2,
+                    difficulty: 'easy'
+                });
+                
+                console.log('🎯 Test result:', questions);
+                
+                const isFallback = questions.some(q => q.explanation && q.explanation.includes('fallback question'));
+                
+                if (isFallback) {
+                    alert('⚠️ AI providers are not working - using fallback questions.\n\nCheck console for details.');
+                    console.warn('All AI providers failed. Possible issues:');
+                    console.warn('- CORS restrictions');
+                    console.warn('- API rate limits');
+                    console.warn('- Network connectivity');
+                    console.warn('- Invalid API keys');
+                } else {
+                    alert('✅ AI providers are working correctly!\n\nGenerated quiz questions successfully.');
+                }
+                
+            } catch (error) {
+                console.error('❌ AI provider test failed:', error);
+                alert('❌ AI provider test failed: ' + error.message);
+            }
+        }
+        
+        function showUserInfo(user) {
+            authSection.classList.add('hidden');
+            userInfoSection.classList.remove('hidden');
+            userInfoText.textContent = `Signed in as ${user.displayName || user.email}`;
+            
+            // Show debug section for signed-in users
+            const debugSection = document.getElementById('debugSection');
+            if (debugSection) {
+                debugSection.classList.remove('hidden');
+            }
+        }
+        
+        function showAuthSection() {
+            authSection.classList.remove('hidden');
+            userInfoSection.classList.add('hidden');
+            
+            // Hide debug section for non-signed-in users
+            const debugSection = document.getElementById('debugSection');
+            if (debugSection) {
+                debugSection.classList.add('hidden');
+            }
+        }
+        
+        function setupFallbackAuth() {
+            const signInBtn = document.getElementById('signInBtn');
+            const googleSignInBtn = document.getElementById('googleSignInBtn');
+            const registerBtn = document.getElementById('registerBtn');
+            const continueAnonymousBtn = document.getElementById('continueAnonymousBtn');
+            
+            // Modal elements
+            const registrationModal = document.getElementById('registrationModal');
+            const signInModal = document.getElementById('signInModal');
+            const closeRegisterModal = document.getElementById('closeRegisterModal');
+            const closeSignInModal = document.getElementById('closeSignInModal');
+            const registrationForm = document.getElementById('registrationForm');
+            const signInForm = document.getElementById('signInForm');
+            
+            if (continueAnonymousBtn) {
+                continueAnonymousBtn.addEventListener('click', () => {
+                    // Hide auth section and allow using the app without signing in
+                    authSection.classList.add('hidden');
+                    updateAuthStatus('success', 'Continuing as guest. Quiz progress will not be saved.');
+                });
+            }
+            
+            if (registerBtn) {
+                registerBtn.addEventListener('click', () => {
+                    registrationModal.classList.remove('hidden');
+                });
+            }
+            
+            if (signInBtn) {
+                signInBtn.addEventListener('click', () => {
+                    signInModal.classList.remove('hidden');
+                });
+            }
+            
+            // Close modal functionality
+            if (closeRegisterModal) {
+                closeRegisterModal.addEventListener('click', () => {
+                    registrationModal.classList.add('hidden');
+                });
+            }
+            
+            if (closeSignInModal) {
+                closeSignInModal.addEventListener('click', () => {
+                    signInModal.classList.add('hidden');
+                });
+            }
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', (event) => {
+                if (event.target === registrationModal) {
+                    registrationModal.classList.add('hidden');
+                }
+                if (event.target === signInModal) {
+                    signInModal.classList.add('hidden');
+                }
+            });
+            
+            // Registration form submission
+            if (registrationForm) {
+                registrationForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    const email = document.getElementById('regEmail').value;
+                    const password = document.getElementById('regPassword').value;
+                    const displayName = document.getElementById('regDisplayName').value;
+                    
+                    try {
+                        updateModalStatus('registerStatus', 'loading', 'Creating your account...');
+                        const result = await authService.register(email, password, displayName);
+                        
+                        if (result.success) {
+                            updateModalStatus('registerStatus', 'success', 'Account created successfully! Welcome to the quiz community!');
+                            setTimeout(() => {
+                                registrationModal.classList.add('hidden');
+                                registrationForm.reset();
+                            }, 2000);
+                        } else {
+                            updateModalStatus('registerStatus', 'error', 'Registration failed: ' + result.error);
+                        }
+                    } catch (error) {
+                        updateModalStatus('registerStatus', 'error', 'Registration failed: ' + error.message);
+                    }
+                });
+            }
+            
+            // Sign in form submission
+            if (signInForm) {
+                signInForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    const email = document.getElementById('signInEmail').value;
+                    const password = document.getElementById('signInPassword').value;
+                    
+                    try {
+                        updateModalStatus('signInStatus', 'loading', 'Signing you in...');
+                        const result = await authService.signIn(email, password);
+                        
+                        if (result.success) {
+                            updateModalStatus('signInStatus', 'success', 'Successfully signed in! Welcome back!');
+                            setTimeout(() => {
+                                signInModal.classList.add('hidden');
+                                signInForm.reset();
+                            }, 2000);
+                        } else {
+                            updateModalStatus('signInStatus', 'error', 'Sign in failed: ' + result.error);
+                        }
+                    } catch (error) {
+                        updateModalStatus('signInStatus', 'error', 'Sign in failed: ' + error.message);
+                    }
+                });
+            }
+            
+            if (googleSignInBtn) {
+                googleSignInBtn.addEventListener('click', async () => {
+                    try {
+                        updateAuthStatus('loading', 'Signing in with Google...');
+                        const result = await authService.signInWithGoogle();
+                        
+                        if (result.success) {
+                            updateAuthStatus('success', 'Successfully signed in with Google!');
+                        } else {
+                            updateAuthStatus('error', 'Google sign in failed: ' + result.error);
+                        }
+                    } catch (error) {
+                        updateAuthStatus('error', 'Google sign in failed: ' + error.message);
+                    }
+                });
+            }
+        }
+        
+        function updateModalStatus(statusId, type, message) {
+            const statusDiv = document.getElementById(statusId);
+            if (!statusDiv) return;
+            
+            statusDiv.className = `status-indicator ${type}`;
+            statusDiv.innerHTML = `<span>${message}</span>`;
+            statusDiv.classList.remove('hidden');
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusDiv.classList.add('hidden');
+                }, 3000);
+            }
+        }
+        
+        function updateAuthStatus(type, message) {
+            // Create or update status indicator in auth section
+            let statusDiv = document.querySelector('#authSection .status-indicator');
+            if (!statusDiv) {
+                statusDiv = document.createElement('div');
+                statusDiv.className = 'status-indicator';
+                document.getElementById('authContainer').appendChild(statusDiv);
+            }
+            
+            statusDiv.className = `status-indicator ${type}`;
+            statusDiv.innerHTML = `<span>${message}</span>`;
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusDiv.remove();
+                }, 3000);
+            }
+        }
+        
+        function updateImageStatus(type, message) {
+            imageStatusIndicator.className = `status-indicator ${type}`;
+            imageStatusIndicator.innerHTML = `<span>${message}</span>`;
+            imageStatusIndicator.classList.remove('hidden');
+        }
+        
+        function updateQuizStatus(type, message) {
+            quizStatusIndicator.className = `status-indicator ${type}`;
+            quizStatusIndicator.innerHTML = `<span>${message}</span>`;
+            quizStatusIndicator.classList.remove('hidden');
+        }
+        
+        // Load initial sample image
+        loadSampleImage();
+    </script>
+</body>
+</html>

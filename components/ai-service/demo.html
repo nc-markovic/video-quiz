@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini AI Service Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d3748 100%);
+            margin: 0;
+            padding: 2rem;
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .demo-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .demo-title {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #ff6b6b, #667eea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .demo-subtitle {
+            font-size: 1.1rem;
+            color: #a0aec0;
+            margin-bottom: 2rem;
+        }
+        
+        .demo-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .demo-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #ff6b6b;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+        }
+        
+        .form-group input::placeholder {
+            color: #a0aec0;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+        }
+        
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .btn:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+        
+        .btn:disabled {
+            background: #4a5568;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-secondary {
+            background: #718096;
+        }
+        
+        .btn-secondary:hover {
+            background: #4a5568;
+        }
+        
+        .status-indicator {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .status-indicator.success {
+            border-left: 4px solid #48bb78;
+        }
+        
+        .status-indicator.error {
+            border-left: 4px solid #ff6b6b;
+        }
+        
+        .status-indicator.loading {
+            border-left: 4px solid #ed8936;
+        }
+        
+        .quiz-preview {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+        
+        .quiz-question {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+        
+        .quiz-question h4 {
+            margin: 0 0 1rem 0;
+            color: #e2e8f0;
+        }
+        
+        .quiz-options {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .quiz-options li {
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        
+        .quiz-options li:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .quiz-options li.correct {
+            background: rgba(72, 187, 120, 0.3);
+            border: 1px solid #48bb78;
+        }
+        
+        .quiz-explanation {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #a0aec0;
+            font-style: italic;
+        }
+        
+        .api-key-section {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .api-key-section h3 {
+            color: #ffc107;
+            margin-top: 0;
+        }
+        
+        .api-key-section p {
+            color: #ffc107;
+            margin-bottom: 1rem;
+        }
+        
+        .api-key-section a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .api-key-section a:hover {
+            text-decoration: underline;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .demo-title {
+                font-size: 2rem;
+            }
+            
+            .btn {
+                width: 100%;
+                margin-right: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-header">
+        <h1 class="demo-title">🤖 Gemini AI Service Demo</h1>
+        <p class="demo-subtitle">Generate quiz questions from images using Google's Gemini AI</p>
+    </div>
+
+    <div class="demo-container">
+        <div class="api-key-section">
+            <h3>🔑 API Key Setup Required</h3>
+            <p>To use this service, you need a free Gemini API key from Google AI Studio.</p>
+            <p>
+                <strong>Steps to get your API key:</strong><br>
+                1. Go to <a href="https://aistudio.google.com/" target="_blank">Google AI Studio</a><br>
+                2. Sign in with your Google account<br>
+                3. Click "Get API key" and create a new key<br>
+                4. Copy the key and enter it below
+            </p>
+        </div>
+
+        <div class="demo-section">
+            <h2 class="section-title">API Configuration</h2>
+            
+            <div class="form-group">
+                <label for="apiKeyInput">Gemini API Key</label>
+                <input type="password" 
+                       id="apiKeyInput" 
+                       placeholder="Enter your Gemini API key"
+                       value="">
+            </div>
+            
+            <button class="btn" id="setApiKeyBtn">Set API Key</button>
+            <button class="btn btn-secondary" id="testConnectionBtn">Test Connection</button>
+            
+            <div class="status-indicator hidden" id="apiStatusIndicator">
+                <span></span>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2 class="section-title">Generate Quiz Questions</h2>
+            
+            <div class="form-group">
+                <label for="imageUrlInput">Image URL</label>
+                <input type="url" 
+                       id="imageUrlInput" 
+                       placeholder="Enter image URL (e.g., https://picsum.photos/800/600)"
+                       value="https://picsum.photos/800/600">
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div class="form-group">
+                    <label for="numQuestions">Number of Questions</label>
+                    <select id="numQuestions">
+                        <option value="3">3 Questions</option>
+                        <option value="5" selected>5 Questions</option>
+                        <option value="7">7 Questions</option>
+                        <option value="10">10 Questions</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="difficulty">Difficulty</label>
+                    <select id="difficulty">
+                        <option value="easy">Easy</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button class="btn" id="generateQuizBtn" disabled>Generate Quiz Questions</button>
+            <button class="btn btn-secondary" id="loadSampleBtn">Load Sample Image</button>
+            
+            <div class="status-indicator hidden" id="generationStatusIndicator">
+                <span></span>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2 class="section-title">Generated Quiz Preview</h2>
+            <div id="quizPreview" class="quiz-preview hidden">
+                <p>Quiz questions will appear here after generation...</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { GeminiService } from './gemini-service.js';
+        
+        // Initialize Gemini service
+        const geminiService = new GeminiService();
+        
+        // Get DOM elements
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        const setApiKeyBtn = document.getElementById('setApiKeyBtn');
+        const testConnectionBtn = document.getElementById('testConnectionBtn');
+        const imageUrlInput = document.getElementById('imageUrlInput');
+        const numQuestionsSelect = document.getElementById('numQuestions');
+        const difficultySelect = document.getElementById('difficulty');
+        const generateQuizBtn = document.getElementById('generateQuizBtn');
+        const loadSampleBtn = document.getElementById('loadSampleBtn');
+        const apiStatusIndicator = document.getElementById('apiStatusIndicator');
+        const generationStatusIndicator = document.getElementById('generationStatusIndicator');
+        const quizPreview = document.getElementById('quizPreview');
+        
+        // Sample images
+        const sampleImages = [
+            'https://picsum.photos/800/600?random=1',
+            'https://picsum.photos/800/600?random=2',
+            'https://picsum.photos/800/600?random=3'
+        ];
+        
+        // Event listeners
+        setApiKeyBtn.addEventListener('click', setApiKey);
+        testConnectionBtn.addEventListener('click', testConnection);
+        generateQuizBtn.addEventListener('click', generateQuiz);
+        loadSampleBtn.addEventListener('click', loadSampleImage);
+        
+        // Check if API key is already set
+        if (geminiService.hasApiKey()) {
+            apiKeyInput.value = '••••••••••••••••';
+            generateQuizBtn.disabled = false;
+            updateApiStatus('success', '✅ API key is set');
+        }
+        
+        // Functions
+        function setApiKey() {
+            const apiKey = apiKeyInput.value.trim();
+            if (!apiKey) {
+                updateApiStatus('error', 'Please enter an API key');
+                return;
+            }
+            
+            geminiService.setApiKey(apiKey);
+            apiKeyInput.value = '••••••••••••••••';
+            generateQuizBtn.disabled = false;
+            updateApiStatus('success', '✅ API key set successfully');
+        }
+        
+        async function testConnection() {
+            updateApiStatus('loading', 'Testing connection...');
+            
+            try {
+                const result = await geminiService.testConnection();
+                if (result.success) {
+                    updateApiStatus('success', '✅ ' + result.message);
+                } else {
+                    updateApiStatus('error', '❌ ' + result.error);
+                }
+            } catch (error) {
+                updateApiStatus('error', '❌ ' + error.message);
+            }
+        }
+        
+        async function generateQuiz() {
+            const imageUrl = imageUrlInput.value.trim();
+            if (!imageUrl) {
+                updateGenerationStatus('error', 'Please enter an image URL');
+                return;
+            }
+            
+            const numQuestions = parseInt(numQuestionsSelect.value);
+            const difficulty = difficultySelect.value;
+            
+            updateGenerationStatus('loading', 'Generating quiz questions...');
+            generateQuizBtn.disabled = true;
+            generateQuizBtn.innerHTML = '<span class="loading-spinner"></span>Generating...';
+            
+            try {
+                const questions = await geminiService.generateQuizFromImage(imageUrl, {
+                    numQuestions,
+                    difficulty,
+                    questionTypes: ['multiple_choice'],
+                    subject: 'general'
+                });
+                
+                displayQuizPreview(questions);
+                updateGenerationStatus('success', `✅ Generated ${questions.length} quiz questions successfully!`);
+                
+            } catch (error) {
+                updateGenerationStatus('error', '❌ ' + error.message);
+                console.error('Quiz generation error:', error);
+            } finally {
+                generateQuizBtn.disabled = false;
+                generateQuizBtn.innerHTML = 'Generate Quiz Questions';
+            }
+        }
+        
+        function loadSampleImage() {
+            const randomImage = sampleImages[Math.floor(Math.random() * sampleImages.length)];
+            imageUrlInput.value = randomImage;
+        }
+        
+        function displayQuizPreview(questions) {
+            quizPreview.innerHTML = '';
+            quizPreview.classList.remove('hidden');
+            
+            questions.forEach((question, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'quiz-question';
+                
+                questionDiv.innerHTML = `
+                    <h4>Question ${index + 1}: ${question.question}</h4>
+                    <ul class="quiz-options">
+                        ${question.options.map((option, optionIndex) => `
+                            <li class="${optionIndex === question.correctAnswer ? 'correct' : ''}">
+                                ${String.fromCharCode(65 + optionIndex)}. ${option}
+                            </li>
+                        `).join('')}
+                    </ul>
+                    <div class="quiz-explanation">
+                        <strong>Explanation:</strong> ${question.explanation}
+                    </div>
+                `;
+                
+                quizPreview.appendChild(questionDiv);
+            });
+        }
+        
+        function updateApiStatus(type, message) {
+            apiStatusIndicator.className = `status-indicator ${type}`;
+            apiStatusIndicator.innerHTML = `<span>${message}</span>`;
+            apiStatusIndicator.classList.remove('hidden');
+        }
+        
+        function updateGenerationStatus(type, message) {
+            generationStatusIndicator.className = `status-indicator ${type}`;
+            generationStatusIndicator.innerHTML = `<span>${message}</span>`;
+            generationStatusIndicator.classList.remove('hidden');
+        }
+        
+        // Load sample image on page load
+        loadSampleImage();
+    </script>
+</body>
+</html>

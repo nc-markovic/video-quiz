@@ -1,8 +1,6 @@
 import { 
     collection, 
     doc, 
-    addDoc, 
-    updateDoc,
     setDoc, 
     getDoc, 
     getDocs, 
@@ -10,23 +8,90 @@ import {
     where, 
     orderBy, 
     limit,
-    serverTimestamp,
-    onSnapshot
+    serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { db } from './firebase-config.js';
 
 export class QuizService {
     constructor() {
-        this.quizzesCollection = 'quizzes';
         this.quizAttemptsCollection = 'quiz_attempts';
-        this.userProgressCollection = 'user_progress';
     }
     
-    // Save a quiz attempt
-    async saveQuizAttempt(userId, quizData) {
+    // Get the next attempt number for a user
+    async getNextAttemptNumber(userId) {
         try {
+            // Simplified query - get all attempts for user and count them
+            const q = query(
+                collection(db, this.quizAttemptsCollection),
+                where('userId', '==', userId)
+            );
+            
+            const querySnapshot = await getDocs(q);
+            
+            // Return the count + 1 for next attempt number
+            return querySnapshot.size + 1;
+            
+        } catch (error) {
+            console.error('Error getting next attempt number:', error);
+            return 1; // Default to first attempt on error
+        }
+    }
+    
+    // Save a quiz attempt with numbered naming
+    async saveQuizAttempt(userId, userName, quizData) {
+        try {
+            console.log('� FIREBASE SERVICE RECEIVED:');
+            console.log('🚨 Parameter 1 (userId):', userId, 'Type:', typeof userId);
+            console.log('🚨 Parameter 2 (userName):', userName, 'Type:', typeof userName);  
+            console.log('🚨 Parameter 3 (quizData):', quizData, 'Type:', typeof quizData);
+            
+            console.log('�🔍 saveQuizAttempt called with parameters:', {
+                userId: userId,
+                userName: userName,
+                quizData: quizData,
+                userIdType: typeof userId,
+                userNameType: typeof userName,
+                quizDataType: typeof quizData
+            });
+            
+            // Validate input parameters
+            if (!userId) {
+                throw new Error('userId is required but was: ' + userId);
+            }
+            
+            if (!userName) {
+                throw new Error('userName is required but was: ' + userName);
+            }
+            
+            if (!quizData) {
+                throw new Error('quizData is required but was: ' + quizData);
+            }
+            
+            if (!quizData.imageUrl) {
+                throw new Error('quizData.imageUrl is required but was: ' + quizData.imageUrl);
+            }
+            
+            if (!quizData.questions || !Array.isArray(quizData.questions)) {
+                throw new Error('quizData.questions must be an array but was: ' + typeof quizData.questions);
+            }
+            
+            console.log('🔄 Saving quiz attempt for user:', userId);
+            console.log('📊 Quiz data:', {
+                imageUrl: quizData.imageUrl,
+                questionsCount: quizData.questions?.length,
+                score: quizData.score,
+                totalQuestions: quizData.totalQuestions
+            });
+            
+            const attemptNumber = await this.getNextAttemptNumber(userId);
+            const documentId = `${userId}_attempt${attemptNumber}`;
+            
+            console.log('📝 Creating document:', documentId);
+            
             const attemptData = {
                 userId: userId,
+                userName: userName,
+                attemptNumber: attemptNumber,
                 imageUrl: quizData.imageUrl,
                 questions: quizData.questions,
                 userAnswers: quizData.userAnswers,
@@ -38,14 +103,13 @@ export class QuizService {
                 createdAt: serverTimestamp()
             };
             
-            const docRef = await addDoc(collection(db, this.quizAttemptsCollection), attemptData);
-            
-            // Update user progress
-            await this.updateUserProgress(userId, quizData);
+            // Use setDoc with custom document ID
+            await setDoc(doc(db, this.quizAttemptsCollection, documentId), attemptData);
             
             return {
                 success: true,
-                attemptId: docRef.id,
+                attemptId: documentId,
+                attemptNumber: attemptNumber,
                 message: 'Quiz attempt saved successfully'
             };
             
@@ -59,68 +123,13 @@ export class QuizService {
         }
     }
     
-    // Update user progress
-    async updateUserProgress(userId, quizData) {
-        try {
-            const progressRef = doc(db, this.userProgressCollection, userId);
-            const progressDoc = await getDoc(progressRef);
-            
-            const currentProgress = progressDoc.exists() ? progressDoc.data() : {
-                totalQuizzes: 0,
-                totalScore: 0,
-                averageScore: 0,
-                bestScore: 0,
-                totalTimeSpent: 0,
-                lastQuizDate: null,
-                createdAt: serverTimestamp()
-            };
-            
-            const newTotalQuizzes = currentProgress.totalQuizzes + 1;
-            const newTotalScore = currentProgress.totalScore + quizData.score;
-            const newAverageScore = Math.round(newTotalScore / newTotalQuizzes);
-            const newBestScore = Math.max(currentProgress.bestScore, quizData.percentage);
-            const newTotalTimeSpent = currentProgress.totalTimeSpent + (quizData.timeSpent || 0);
-            
-            const updatedProgress = {
-                totalQuizzes: newTotalQuizzes,
-                totalScore: newTotalScore,
-                averageScore: newAverageScore,
-                bestScore: newBestScore,
-                totalTimeSpent: newTotalTimeSpent,
-                lastQuizDate: serverTimestamp(),
-                updatedAt: serverTimestamp()
-            };
-            
-            // If document doesn't exist, add createdAt timestamp
-            if (!progressDoc.exists()) {
-                updatedProgress.createdAt = serverTimestamp();
-            }
-            
-            // Use setDoc with merge to create or update the document
-            await setDoc(progressRef, updatedProgress, { merge: true });
-            
-            return {
-                success: true,
-                message: 'User progress updated successfully'
-            };
-            
-        } catch (error) {
-            console.error('Error updating user progress:', error);
-            return {
-                success: false,
-                error: error.message,
-                message: 'Failed to update user progress'
-            };
-        }
-    }
-    
     // Get user's quiz attempts
     async getUserQuizAttempts(userId, limitCount = 10) {
         try {
             const q = query(
                 collection(db, this.quizAttemptsCollection),
                 where('userId', '==', userId),
-                orderBy('completedAt', 'desc'),
+                orderBy('attemptNumber', 'desc'),
                 limit(limitCount)
             );
             
@@ -151,46 +160,92 @@ export class QuizService {
         }
     }
     
-    // Get user progress
+    // Calculate user progress from all attempts
     async getUserProgress(userId) {
         try {
-            const progressRef = doc(db, this.userProgressCollection, userId);
-            const progressDoc = await getDoc(progressRef);
+            const q = query(
+                collection(db, this.quizAttemptsCollection),
+                where('userId', '==', userId),
+                orderBy('attemptNumber', 'asc')
+            );
             
-            if (progressDoc.exists()) {
+            const querySnapshot = await getDocs(q);
+            
+            if (querySnapshot.empty) {
                 return {
                     success: true,
-                    progress: progressDoc.data(),
-                    message: 'User progress retrieved successfully'
-                };
-            } else {
-                // Create initial progress if it doesn't exist
-                const initialProgress = {
-                    totalQuizzes: 0,
-                    totalScore: 0,
-                    averageScore: 0,
-                    bestScore: 0,
-                    totalTimeSpent: 0,
-                    lastQuizDate: null,
-                    createdAt: serverTimestamp()
-                };
-                
-                await updateDoc(progressRef, initialProgress);
-                
-                return {
-                    success: true,
-                    progress: initialProgress,
-                    message: 'Initial progress created'
+                    progress: {
+                        userName: 'Unknown User',
+                        totalQuizzes: 0,
+                        totalScore: 0,
+                        averageScore: 0,
+                        bestScore: 0,
+                        totalTimeSpent: 0,
+                        lastQuizDate: null,
+                        attempts: []
+                    },
+                    message: 'No quiz attempts found'
                 };
             }
             
+            let totalQuizzes = 0;
+            let totalScore = 0;
+            let bestScore = 0;
+            let totalTimeSpent = 0;
+            let lastQuizDate = null;
+            let userName = 'Unknown User';
+            const attempts = [];
+            
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                totalQuizzes++;
+                totalScore += data.score || 0;
+                bestScore = Math.max(bestScore, data.percentage || 0);
+                totalTimeSpent += data.timeSpent || 0;
+                
+                if (data.completedAt && (!lastQuizDate || data.completedAt > lastQuizDate)) {
+                    lastQuizDate = data.completedAt;
+                }
+                
+                if (data.userName) {
+                    userName = data.userName;
+                }
+                
+                attempts.push({
+                    id: doc.id,
+                    attemptNumber: data.attemptNumber,
+                    score: data.score,
+                    percentage: data.percentage,
+                    timeSpent: data.timeSpent,
+                    completedAt: data.completedAt,
+                    imageUrl: data.imageUrl
+                });
+            });
+            
+            const averageScore = totalQuizzes > 0 ? Math.round(totalScore / totalQuizzes) : 0;
+            
+            return {
+                success: true,
+                progress: {
+                    userName: userName,
+                    totalQuizzes: totalQuizzes,
+                    totalScore: totalScore,
+                    averageScore: averageScore,
+                    bestScore: bestScore,
+                    totalTimeSpent: totalTimeSpent,
+                    lastQuizDate: lastQuizDate,
+                    attempts: attempts.sort((a, b) => b.attemptNumber - a.attemptNumber)
+                },
+                message: 'User progress calculated successfully'
+            };
+            
         } catch (error) {
-            console.error('Error getting user progress:', error);
+            console.error('Error calculating user progress:', error);
             return {
                 success: false,
                 error: error.message,
                 progress: null,
-                message: 'Failed to retrieve user progress'
+                message: 'Failed to calculate user progress'
             };
         }
     }
@@ -198,29 +253,49 @@ export class QuizService {
     // Get leaderboard (top users by average score)
     async getLeaderboard(limitCount = 10) {
         try {
+            // Get all quiz attempts
             const q = query(
-                collection(db, this.userProgressCollection),
-                orderBy('averageScore', 'desc'),
-                limit(limitCount)
+                collection(db, this.quizAttemptsCollection),
+                orderBy('userId', 'asc')
             );
             
             const querySnapshot = await getDocs(q);
-            const leaderboard = [];
+            const userStats = {};
             
+            // Calculate stats for each user
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
-                leaderboard.push({
-                    userId: doc.id,
-                    averageScore: data.averageScore,
-                    totalQuizzes: data.totalQuizzes,
-                    bestScore: data.bestScore,
-                    totalTimeSpent: data.totalTimeSpent
-                });
+                const userId = data.userId;
+                
+                if (!userStats[userId]) {
+                    userStats[userId] = {
+                        userId: userId,
+                        userName: data.userName || 'Unknown User',
+                        totalQuizzes: 0,
+                        totalScore: 0,
+                        bestScore: 0,
+                        totalTimeSpent: 0
+                    };
+                }
+                
+                userStats[userId].totalQuizzes++;
+                userStats[userId].totalScore += data.score || 0;
+                userStats[userId].bestScore = Math.max(userStats[userId].bestScore, data.percentage || 0);
+                userStats[userId].totalTimeSpent += data.timeSpent || 0;
             });
+            
+            // Convert to array and calculate average scores
+            const leaderboard = Object.values(userStats).map(user => ({
+                ...user,
+                averageScore: user.totalQuizzes > 0 ? Math.round(user.totalScore / user.totalQuizzes) : 0
+            }));
+            
+            // Sort by average score (descending) and limit results
+            leaderboard.sort((a, b) => b.averageScore - a.averageScore);
             
             return {
                 success: true,
-                leaderboard: leaderboard,
+                leaderboard: leaderboard.slice(0, limitCount),
                 message: 'Leaderboard retrieved successfully'
             };
             

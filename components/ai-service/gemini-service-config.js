@@ -1,35 +1,31 @@
-// Gemini API Service Configuration
-// Configuration for Gemini API integration
+// Gemini API Configuration
+// Set API_KEY to null to use localStorage or prompt user
+export const API_KEY = null;
 
-export const GEMINI_CONFIG = {
-    // API key should be provided by user - NOT stored in code
-    API_KEY: null,
-    
-    // API configuration
-    BASE_URL: 'https://generativelanguage.googleapis.com/v1beta',
-    DEFAULT_MODEL: 'gemini-1.5-flash-latest',
-    
-    // Default generation settings
-    GENERATION_CONFIG: {
-        temperature: 0.7,
-        topK: 40,
-        topP: 0.95,
-        maxOutputTokens: 2048,
-    },
-    
-    // Instructions for users to get API key
-    API_KEY_INSTRUCTIONS: {
-        title: 'Get Your Free Gemini API Key',
-        steps: [
-            'Go to https://aistudio.google.com/',
-            'Sign in with your Google account',
-            'Click "Get API key" in the left sidebar',
-            'Create a new API key',
-            'Copy the key and paste it when prompted'
-        ],
-        note: 'The API key is free and allows you to generate AI-powered quiz questions from images.'
-    }
+export const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
+
+export const DEFAULT_MODEL = 'gemini-1.5-flash-latest';
+
+export const GENERATION_CONFIG = {
+    temperature: 0.7,
+    topK: 40,
+    topP: 0.95,
+    maxOutputTokens: 1024,
+    responseMimeType: "application/json"
 };
 
-// Export individual values for convenience
-export const { API_KEY, BASE_URL, DEFAULT_MODEL, GENERATION_CONFIG, API_KEY_INSTRUCTIONS } = GEMINI_CONFIG;
+export const API_KEY_INSTRUCTIONS = `
+🔑 To get your Gemini API key:
+
+1. Go to https://aistudio.google.com/app/apikey
+2. Sign in with your Google account
+3. Click "Create API Key"
+4. Copy the generated key
+
+⚠️ Important:
+- Keep your API key secure and private
+- Don't share it publicly or commit it to version control
+- The key will be stored locally in your browser
+
+Your API key will be saved securely in your browser's local storage.
+`;

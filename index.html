@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Quiz App - AI-Powered Image Quizzes</title>
-    <link rel="stylesheet" href="components/image-player/image-player.css">
-    <link rel="stylesheet" href="components/quiz-system/quiz-system.css">
-    <link rel="stylesheet" href="components/firebase/auth-ui.css">
+    <link rel="stylesheet" href="styles/main.css">
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -487,30 +485,8 @@
             <div class="status-indicator hidden" id="quizStatusIndicator">
                 <span>Enter an image URL above and quiz questions will be generated automatically</span>
             </div>
-            
-            <!-- Debug/Test Section (only visible when signed in) -->
-            <div class="debug-section hidden" id="debugSection" style="margin-top: 2rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
-                <h3 style="color: #a0aec0; font-size: 1rem; margin-bottom: 1rem;">🧪 Database Testing</h3>
-                <button class="control-btn secondary" id="addDummyDataBtn" onclick="addDummyTestData()">
-                    📊 Add Dummy Quiz Data to Firebase
-                </button>
-                <button class="control-btn secondary" onclick="testQuizSaving()" style="margin-left: 0.5rem;">
-                    🧪 Test Quiz Saving
-                </button>
-                <button class="control-btn secondary" onclick="checkAuthStatus()" style="margin-left: 0.5rem;">
-                    🔐 Check Auth Status
-                </button>
-                <button class="control-btn secondary" onclick="testAIProviders()" style="margin-left: 0.5rem;">
-                    🤖 Test AI Providers
-                </button>
-                <p style="color: #a0aec0; font-size: 0.8rem; margin-top: 0.5rem;">
-                    These buttons test the database functionality and AI services.
-                </p>
-            </div>
         </div>
-    </div>
-
-    <script type="module">
+    </div>    <script type="module">
         import { ImagePlayer } from './components/image-player/ImagePlayer.js';
         import { QuizSystem } from './components/quiz-system/QuizSystem.js';
         import { MultiAIService } from './components/ai-service/multi-ai-service-fixed.js';
@@ -623,7 +599,8 @@
             updateImageStatus('error', '❌ Failed to load image. Please check the URL.');
         });
         
-        // Quiz system event listeners
+        // Quiz system event listeners - DISABLED (using the main one below instead)
+        /*
         document.addEventListener('quizCompleted', (e) => {
             const { score, total } = e.detail;
             const percentage = Math.round((score / total) * 100);
@@ -632,10 +609,15 @@
             updateQuizStatus('success', `🎉 Quiz completed! Score: ${score}/${total} (${percentage}%)`);
             
             // Save quiz attempt if user is signed in
+            // DISABLED: This is now handled by the main quizCompleted event handler below
+            /*
             if (currentUser && currentQuizData) {
+                console.log('🔵 CALLING FIRST saveQuizAttempt with params:', { score, total, percentage, timeSpent });
                 saveQuizAttempt(score, total, percentage, timeSpent);
             }
+            *//*
         });
+        */
         
         // Auth state change listener
         authService.onAuthStateChange((user) => {
@@ -840,7 +822,7 @@
                 }
                 
                 // Save quiz result if user is logged in
-                console.log('🎯 About to call saveQuizResult()');
+                console.log('🎯 About to call saveQuizResult() FROM MAIN EVENT HANDLER');
                 saveQuizResult();
             }
         });
@@ -898,7 +880,14 @@
         }
         
         async function saveQuizAttempt(score, total, percentage, timeSpent) {
-            if (!currentUser || !currentQuizData) return;
+            console.log('🔍 saveQuizAttempt called with:', { score, total, percentage, timeSpent });
+            console.log('🔍 currentUser:', currentUser);
+            console.log('🔍 currentQuizData:', currentQuizData);
+            
+            if (!currentUser || !currentQuizData) {
+                console.log('❌ Missing currentUser or currentQuizData');
+                return;
+            }
             
             try {
                 const quizData = {
@@ -909,10 +898,27 @@
                     timeSpent: timeSpent
                 };
                 
-                const result = await quizService.saveQuizAttempt(currentUser.uid, quizData);
+                console.log('🔍 Created quizData:', quizData);
+                
+                // Get user's display name or email as username
+                const userName = currentUser.displayName || currentUser.email || 'Anonymous User';
+                
+                console.log('� FIRST FUNCTION - userName assignment:');
+                console.log('🔴 currentUser.displayName:', currentUser.displayName);
+                console.log('🔴 currentUser.email:', currentUser.email);
+                console.log('🔴 userName assigned:', userName, typeof userName);
+                console.log('🔴 quizData:', quizData, typeof quizData);
+                
+                console.log('�🔍 About to call saveQuizAttempt with:', {
+                    userId: currentUser.uid,
+                    userName: userName,
+                    quizData: quizData
+                });
+                
+                const result = await quizService.saveQuizAttempt(currentUser.uid, userName, quizData);
                 
                 if (result.success) {
-                    console.log('Quiz attempt saved successfully');
+                    console.log(`Quiz attempt ${result.attemptNumber} saved successfully`);
                 } else {
                     console.error('Failed to save quiz attempt:', result.message);
                 }
@@ -922,41 +928,92 @@
         }
         
         async function saveQuizResult() {
-            console.log('🔄 saveQuizResult() called');
+            console.log('� saveQuizResult() FUNCTION STARTED');
+            console.log('�🔄 saveQuizResult() called');
             console.log('Current user:', currentUser ? currentUser.uid : 'None');
-            console.log('Current quiz data:', currentQuizData ? 'Present' : 'Missing');
+            console.log('Current quiz data:', currentQuizData);
             
-            if (!currentUser || !currentQuizData) {
-                console.log('❌ Cannot save quiz result: User not logged in or no quiz data');
-                console.log('currentUser exists:', !!currentUser);
-                console.log('currentQuizData exists:', !!currentQuizData);
+            if (!currentUser) {
+                console.log('❌ Cannot save quiz result: User not logged in');
+                alert('Please sign in first to save quiz results');
+                return;
+            }
+            
+            if (!currentQuizData) {
+                console.log('❌ Cannot save quiz result: No quiz data available');
+                alert('Please complete a quiz first');
+                return;
+            }
+            
+            // Validate that currentQuizData has required properties
+            if (!currentQuizData.imageUrl || !currentQuizData.questions) {
+                console.log('❌ Invalid quiz data structure:', currentQuizData);
+                alert('Invalid quiz data - please generate a new quiz');
                 return;
             }
             
             try {
                 updateQuizStatus('saving', '💾 Saving your quiz result...');
                 
-                // Log what we're saving for debugging
-                console.log('💾 Saving quiz data:', {
-                    userId: currentUser.uid,
-                    score: currentQuizData.score,
-                    total: currentQuizData.totalQuestions,
-                    percentage: currentQuizData.percentage,
-                    timeSpent: currentQuizData.timeSpent,
-                    answersCount: currentQuizData.userAnswers?.length || 0,
-                    questionsCount: currentQuizData.questions?.length || 0,
-                    imageUrl: currentQuizData.imageUrl
-                });
+                // Ensure the quiz data has all required properties
+                const formattedQuizData = {
+                    imageUrl: currentQuizData.imageUrl,
+                    questions: currentQuizData.questions || [],
+                    userAnswers: currentQuizData.userAnswers || [],
+                    score: currentQuizData.score || 0,
+                    totalQuestions: currentQuizData.totalQuestions || currentQuizData.questions?.length || 0,
+                    percentage: currentQuizData.percentage || 0,
+                    timeSpent: currentQuizData.timeSpent || 0
+                };
                 
-                const result = await quizService.saveQuizAttempt(currentUser.uid, currentQuizData);
+                console.log('🔍 currentQuizData before formatting:', currentQuizData);
+                console.log('🔍 formattedQuizData after formatting:', formattedQuizData);
+                
+                // Log what we're saving for debugging
+                console.log('💾 Saving formatted quiz data:', formattedQuizData);
+                
+                const userName = currentUser.displayName || currentUser.email || 'Anonymous User';
+                
+                console.log('� IMMEDIATELY AFTER userName ASSIGNMENT:');
+                console.log('🚨 currentUser.displayName:', currentUser.displayName, typeof currentUser.displayName);
+                console.log('🚨 currentUser.email:', currentUser.email, typeof currentUser.email);
+                console.log('🚨 userName just assigned:', userName, typeof userName);
+                
+                console.log('�🔍 Final check before calling saveQuizAttempt:');
+                console.log('  userId:', currentUser.uid, typeof currentUser.uid);
+                console.log('  userName:', userName, typeof userName);
+                console.log('  formattedQuizData:', formattedQuizData, typeof formattedQuizData);
+                console.log('  formattedQuizData.imageUrl:', formattedQuizData?.imageUrl);
+                console.log('  formattedQuizData.questions:', formattedQuizData?.questions);
+                
+                // Check each parameter before passing
+                if (!currentUser.uid) {
+                    console.error('❌ userId is missing!');
+                    return;
+                }
+                if (!userName) {
+                    console.error('❌ userName is missing!');
+                    return;
+                }
+                if (!formattedQuizData) {
+                    console.error('❌ formattedQuizData is missing!');
+                    return;
+                }
+                
+                console.log('🚨 EXACT CALL TRACE - Parameters about to be passed:');
+                console.log('🚨 Parameter 1 (userId):', currentUser.uid, 'Type:', typeof currentUser.uid);
+                console.log('🚨 Parameter 2 (userName):', userName, 'Type:', typeof userName);
+                console.log('🚨 Parameter 3 (formattedQuizData):', formattedQuizData, 'Type:', typeof formattedQuizData);
+                
+                const result = await quizService.saveQuizAttempt(currentUser.uid, userName, formattedQuizData);
                 console.log('📤 Firebase save result:', result);
                 
                 if (result.success) {
                     console.log('Quiz result saved successfully!');
                     const detailedMessage = `✅ Quiz result saved to your account!\n` +
-                                          `📊 Score: ${currentQuizData.score}/${currentQuizData.totalQuestions} (${currentQuizData.percentage}%)\n` +
-                                          `⏱️ Time: ${currentQuizData.timeSpent}s\n` +
-                                          `📝 ${currentQuizData.userAnswers?.length || 0} answers saved`;
+                                          `📊 Score: ${formattedQuizData.score}/${formattedQuizData.totalQuestions} (${formattedQuizData.percentage}%)\n` +
+                                          `⏱️ Time: ${formattedQuizData.timeSpent}s\n` +
+                                          `📝 ${formattedQuizData.userAnswers?.length || 0} answers saved`;
                     updateQuizStatus('saved', detailedMessage);
                     
                     // Clear the quiz start time
@@ -1017,8 +1074,11 @@
                     timeSpent: 45
                 };
                 
+                // Get username for dummy data
+                const userName = currentUser.displayName || currentUser.email || 'Test User';
+                
                 // Save first dummy quiz
-                const result1 = await quizService.saveQuizAttempt(currentUser.uid, dummyQuizData);
+                const result1 = await quizService.saveQuizAttempt(currentUser.uid, userName, dummyQuizData);
                 console.log('First dummy quiz saved:', result1);
                 
                 // Create second dummy quiz with different results
@@ -1032,7 +1092,7 @@
                 };
                 
                 // Save second dummy quiz
-                const result2 = await quizService.saveQuizAttempt(currentUser.uid, dummyQuizData2);
+                const result2 = await quizService.saveQuizAttempt(currentUser.uid, userName, dummyQuizData2);
                 console.log('Second dummy quiz saved:', result2);
                 
                 // Create third dummy quiz
@@ -1046,7 +1106,7 @@
                 };
                 
                 // Save third dummy quiz
-                const result3 = await quizService.saveQuizAttempt(currentUser.uid, dummyQuizData3);
+                const result3 = await quizService.saveQuizAttempt(currentUser.uid, userName, dummyQuizData3);
                 console.log('Third dummy quiz saved:', result3);
                 
                 if (result1.success && result2.success && result3.success) {
@@ -1100,7 +1160,7 @@
                 timeSpent: 30
             };
             
-            console.log('🎯 Test data created, calling saveQuizResult()...');
+            console.log('🎯 Test data created, calling saveQuizResult() FROM TEST FUNCTION...');
             await saveQuizResult();
             
             alert('🧪 Test quiz saving completed! Check console and Firebase for results.');
@@ -1201,23 +1261,11 @@
             authSection.classList.add('hidden');
             userInfoSection.classList.remove('hidden');
             userInfoText.textContent = `Signed in as ${user.displayName || user.email}`;
-            
-            // Show debug section for signed-in users
-            const debugSection = document.getElementById('debugSection');
-            if (debugSection) {
-                debugSection.classList.remove('hidden');
-            }
         }
         
         function showAuthSection() {
             authSection.classList.remove('hidden');
             userInfoSection.classList.add('hidden');
-            
-            // Hide debug section for non-signed-in users
-            const debugSection = document.getElementById('debugSection');
-            if (debugSection) {
-                debugSection.classList.add('hidden');
-            }
         }
         
         function setupFallbackAuth() {
